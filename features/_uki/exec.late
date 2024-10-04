@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+mkdir -p /efi/EFI/Linux
+
+kernel="$(find "/boot/" -name 'vmlinuz-*' | sort -V | tail -n 1)"
+initrd="/boot/initrd.img-${kernel#*-}"
+
+unshare --mount bash -c 'mount -t tmpfs none /sys && mount --bind /usr/bin/false /usr/bin/systemd-detect-virt && "$@"' \
+DRACUT_COMPRESS_XZ="$(command -v xz)" dracut \
+--no-hostonly \
+--force \
+--kver "${kernel#*-}" \
+--modules "bash dash systemd systemd-initrd kernel-modules kernel-modules-extra terminfo udev-rules dracut-systemd base fs-lib shutdown" \
+--reproducible \
+"$initrd"
+
+update-kernel-cmdline
+cmdline="$(< /etc/kernel/cmdline)"
+
+case "$BUILDER_ARCH" in
+  amd64)
+    uefi_arch=X64
+    gnu_arch=x86_64
+    ;;
+  arm64)
+    uefi_arch=AA64
+    gnu_arch=aarch64
+    ;;
+esac
+
+echo "kernel: $kernel"
+echo "initrd: $initrd"
+echo "cmdline: $cmdline"
+echo "uefi_arch: $uefi_arch"
+echo "gnu_arch: $gnu_arch"
+
+/usr/lib/systemd/ukify build \
+  --stub "/usr/lib/systemd/boot/efi/linux$(tr '[:upper:]' '[:lower:]' <<< "$uefi_arch").efi.stub" \
+  --linux "$kernel" \
+  --initrd "$initrd" \
+  --cmdline="$cmdline" \
+  --uname "${kernel#*-}" \
+  --os-release "@/etc/os-release" \
+  --output="/efi/EFI/Linux/$BUILDER_CNAME+3.efi"
+
+SYSTEMD_ESP_PATH=/efi bootctl --no-variables install

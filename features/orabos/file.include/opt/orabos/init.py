@@ -132,6 +132,11 @@ def setup_memory():
         new = re.sub(r"^options.*", f"\\g<0> hugepages={hugepages}", old, flags=re.M)
         entry.write_text(new)
 
+    # for UKI
+    # source: https://www.freedesktop.org/software/systemd/man/latest/systemd-stub.html
+    pathlib.Path("/efi/loader/addons").mkdir(parents=True, exist_ok=True)
+    os.system(f"/usr/lib/systemd/ukify build --output=/efi/loader/addons/50-hugepages.addon.efi --cmdline=\"hugepages={hugepages}\"")
+
 
 def _query_netbox(query):
     response = requests.post(

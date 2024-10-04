@@ -5,3 +5,6 @@ features:
     - gardener
     - vhost
     - _slim
+    - _uki
+  exclude:
+    - _boot

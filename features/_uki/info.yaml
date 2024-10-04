@@ -1,0 +1,2 @@
+description: "UEFI (systemd-boot) via Unified Kernel Image (UKI)"
+type: flag
