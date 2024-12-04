@@ -13,7 +13,7 @@ function adopt_watermark_scale_factor() {
   # issue, but is likely a suboptimal value, but a first start.
   # The value 500 reproduces exactly that value for that scale, and hopefully
   # also holds for larger hosts.
-  max_watermark_scale_factor=$(($non_hugepages_mb * 500 / $mem_total_mb))
+  max_watermark_scale_factor=$(($non_hugepages_mb * 300 / $mem_total_mb))
   watermark_scale_factor=$(</proc/sys/vm/watermark_scale_factor)
   if [ $max_watermark_scale_factor -lt $watermark_scale_factor ]; then
     echo $max_watermark_scale_factor > /proc/sys/vm/watermark_scale_factor
